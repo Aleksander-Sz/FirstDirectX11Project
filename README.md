@@ -1,0 +1,1 @@
+**My first DirectX11 Project, prepared as part of the Computer Graphics 2 course.**
