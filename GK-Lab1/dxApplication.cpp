@@ -16,6 +16,22 @@ DxApplication::DxApplication(HINSTANCE hInstance) : WindowApplication(hInstance)
 	m_device.context()->OMSetRenderTargets(1, &backBuffer, m_depthBuffer.get());
 	Viewport viewport{ wndSize };
 	m_device.context()->RSSetViewports(1, &viewport);
+
+	XMStoreFloat4x4(&m_modelMtx, DirectX::XMMatrixIdentity());
+	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(-30)) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
+	XMStoreFloat4x4(&m_projMtx, DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45),
+		static_cast<float>(wndSize.cx) / wndSize.cy, 0.1f, 100.0f));
+	m_cbMVP = m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>();
+
+/*	D3D11_RASTERIZER_DESC rasterDesc = {};
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_NONE; // Wy³¹czamy odrzucanie œcianek
+	rasterDesc.FrontCounterClockwise = FALSE;
+
+	ID3D11RasterizerState* pRasterizerState;
+	m_device->CreateRasterizerState(&rasterDesc, &pRasterizerState);
+	m_device.context()->RSSetState(pRasterizerState);*/
 	
 }
 int DxApplication::MainLoop()
@@ -37,7 +53,15 @@ int DxApplication::MainLoop()
 	} while (msg.message != WM_QUIT);
 	return msg.wParam;
 }
-void DxApplication::Update() {};
+void DxApplication::Update()
+{
+	DirectX::XMStoreFloat4x4(&m_modelMtx, XMLoadFloat4x4(&m_modelMtx) * DirectX::XMMatrixRotationY(0.001f));
+	D3D11_MAPPED_SUBRESOURCE res;
+	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
+	DirectX::XMMATRIX mvp = XMLoadFloat4x4(&m_modelMtx) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
+	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
+	m_device.context()->Unmap(m_cbMVP.get(), 0);
+};
 void DxApplication::Render()
 {
 	const float clearColor[] = { 0.5f,0.5f,1.0f,1.0f };
@@ -48,10 +72,13 @@ void DxApplication::Render()
 	UINT strides[] = {sizeof(Vertex)};
 	UINT offsets[] = {0};
 	m_device.context()->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+	m_device.context()->IASetIndexBuffer(m_device.indexBuffer(), DXGI_FORMAT_R16_UINT, 0);
 	m_device.context()->IASetInputLayout(m_device.layout());
 	m_device.context()->VSSetShader(m_device.vertexShader(), nullptr, 0);
 	m_device.context()->PSSetShader(m_device.pixelShader(), nullptr, 0);
 	m_device.context()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ID3D11Buffer* cbs[] = { m_cbMVP.get() };
+	m_device.context()->VSSetConstantBuffers(0, 1, cbs);
 
-	m_device.context()->Draw(3, 0);
+	m_device.context()->DrawIndexed(36, 0, 0);
 }

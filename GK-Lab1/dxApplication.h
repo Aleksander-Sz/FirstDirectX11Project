@@ -1,6 +1,7 @@
 #pragma once
 #include "windowApplication.h"
 #include "dxDevice.h"
+#include <directxmath.h>
 
 class DxApplication : public mini::WindowApplication {
 public:
@@ -15,4 +16,11 @@ private:
 	mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
 
 	mini::dx_ptr<ID3D11DepthStencilView> m_depthBuffer;
+	mini::dx_ptr<ID3D11Buffer> m_vertexBuffer;
+	mini::dx_ptr<ID3D11VertexShader> m_vertexShader;
+	mini::dx_ptr<ID3D11PixelShader> m_pixelShader;
+	mini::dx_ptr<ID3D11InputLayout> m_layout;
+
+	DirectX::XMFLOAT4X4 m_modelMtx, m_viewMtx, m_projMtx;
+	mini::dx_ptr<ID3D11Buffer> m_cbMVP;
 };

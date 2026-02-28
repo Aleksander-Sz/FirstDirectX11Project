@@ -56,3 +56,9 @@ BufferDescription::BufferDescription(UINT bindFlags, size_t byteWidth)
 	MiscFlags = 0;
 	StructureByteStride = 0;
 }
+
+Vertex::Vertex(float x, float y, float z, float r, float g, float b)
+{
+	position = DirectX::XMFLOAT3(x, y, z);
+	color = DirectX::XMFLOAT3(r, g, b);
+}

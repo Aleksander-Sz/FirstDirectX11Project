@@ -17,13 +17,26 @@ public:
 	std::vector<char> LoadByteCode(const std::wstring& filename);
 
 	template<class T> 
-	inline mini::dx_ptr<ID3D11Buffer> CreateVertexBuffer(const std::vector<T>& vertices) const
+	mini::dx_ptr<ID3D11Buffer> CreateVertexBuffer(const std::vector<T>& vertices) const
 	{
 		auto desc = BufferDescription::VertexBufferDescription(vertices.size() * sizeof(T));
 		return CreateBuffer(reinterpret_cast<const void*>(vertices.data()), desc);
 	}
+	template<class T>
+	mini::dx_ptr<ID3D11Buffer> CreateIndexBuffer(const std::vector<T>& indices) const
+	{
+		auto desc = BufferDescription::IndexBufferDescription(indices.size() * sizeof(T));
+		return CreateBuffer(reinterpret_cast<const void*>(indices.data()), desc);
+	}
+	template<class T>
+	mini::dx_ptr<ID3D11Buffer> CreateConstantBuffer() const
+	{
+		auto desc = BufferDescription::ConstantBufferDescription(sizeof(T));
+		return CreateBuffer(nullptr, desc);
+	}
 
 	std::vector<Vertex> CreateTriangleVertices();
+	std::vector<unsigned short> CreateCubeIndices();
 
 	//getters
 	const  mini::dx_ptr<ID3D11DeviceContext>& context() const
@@ -37,6 +50,10 @@ public:
 	ID3D11Buffer* vertexBuffer() const
 	{
 		return m_vertexBuffer.get();
+	}
+	ID3D11Buffer* indexBuffer() const
+	{
+		return m_indexBuffer.get();
 	}
 	ID3D11InputLayout* layout() const
 	{
@@ -56,6 +73,7 @@ private:
 	mini::dx_ptr<ID3D11DeviceContext> m_context;
 	mini::dx_ptr<IDXGISwapChain> m_swapChain;
 	mini::dx_ptr<ID3D11Buffer> m_vertexBuffer;
+	mini::dx_ptr<ID3D11Buffer> m_indexBuffer;
 	mini::dx_ptr<ID3D11InputLayout> m_layout;
 	mini::dx_ptr<ID3D11VertexShader> m_vertexShader;
 	mini::dx_ptr<ID3D11PixelShader> m_pixelShader;

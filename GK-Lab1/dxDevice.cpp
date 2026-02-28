@@ -27,10 +27,13 @@ DxDevice::DxDevice(const mini::Window& window)
 	m_device->CreatePixelShader(psBytes.data(), psBytes.size(), NULL, &rawPixelShader);
 	m_vertexShader.reset(rawVertexShader);
 	m_pixelShader.reset(rawPixelShader);
-	const auto vertices = CreateTriangleVertices();
-	m_vertexBuffer = CreateVertexBuffer(vertices);
+    const auto vertices = CreateTriangleVertices();
+    m_vertexBuffer = CreateVertexBuffer(vertices);
+    const auto indices = CreateCubeIndices();
+    m_indexBuffer = CreateIndexBuffer(indices);
 	std::vector<D3D11_INPUT_ELEMENT_DESC> elements{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 	ID3D11InputLayout* rawLayout = nullptr;
 	hr = m_device->CreateInputLayout(elements.data(), elements.size(), vsBytes.data(), vsBytes.size(), &rawLayout);
@@ -98,9 +101,65 @@ std::vector<char> DxDevice::LoadByteCode(const std::wstring& filename) {
 
 std::vector<Vertex> DxDevice::CreateTriangleVertices()
 {
-	std::vector<Vertex> vertices;
-	vertices.push_back(Vertex{ -0.5f, -0.5f });
-	vertices.push_back(Vertex{ -0.5f,  0.5f });
-	vertices.push_back(Vertex{  0.5f, -0.5f });
-	return vertices;
+	return
+	{
+		// ===== FRONT (+Z) - Red =====
+		{ -0.5f, -0.5f,  0.5f, 1, 0, 0 },
+		{ -0.5f,  0.5f,  0.5f, 1, 0, 0 },
+		{  0.5f,  0.5f,  0.5f, 1, 0, 0 },
+		{  0.5f, -0.5f,  0.5f, 1, 0, 0 },
+
+		// ===== BACK (-Z) - Green =====
+		{  0.5f, -0.5f, -0.5f, 0, 1, 0 },
+		{  0.5f,  0.5f, -0.5f, 0, 1, 0 },
+		{ -0.5f,  0.5f, -0.5f, 0, 1, 0 },
+		{ -0.5f, -0.5f, -0.5f, 0, 1, 0 },
+
+		// ===== LEFT (-X) - Blue =====
+		{ -0.5f, -0.5f, -0.5f, 0, 0, 1 },
+		{ -0.5f,  0.5f, -0.5f, 0, 0, 1 },
+		{ -0.5f,  0.5f,  0.5f, 0, 0, 1 },
+		{ -0.5f, -0.5f,  0.5f, 0, 0, 1 },
+
+		// ===== RIGHT (+X) - Yellow =====
+		{  0.5f, -0.5f,  0.5f, 1, 1, 0 },
+		{  0.5f,  0.5f,  0.5f, 1, 1, 0 },
+		{  0.5f,  0.5f, -0.5f, 1, 1, 0 },
+		{  0.5f, -0.5f, -0.5f, 1, 1, 0 },
+
+		// ===== TOP (+Y) - Magenta =====
+		{ -0.5f,  0.5f,  0.5f, 1, 0, 1 },
+		{ -0.5f,  0.5f, -0.5f, 1, 0, 1 },
+		{  0.5f,  0.5f, -0.5f, 1, 0, 1 },
+		{  0.5f,  0.5f,  0.5f, 1, 0, 1 },
+
+		// ===== BOTTOM (-Y) - Cyan =====
+		{ -0.5f, -0.5f, -0.5f, 0, 1, 1 },
+		{ -0.5f, -0.5f,  0.5f, 0, 1, 1 },
+		{  0.5f, -0.5f,  0.5f, 0, 1, 1 },
+		{  0.5f, -0.5f, -0.5f, 0, 1, 1 },
+	};
+}
+std::vector<unsigned short> DxDevice::CreateCubeIndices()
+{
+	return
+	{
+		// Front
+		0,2,1,  0,3,2,
+
+		// Back
+		4,6,5,  4,7,6,
+
+		// Left
+		8,10,9,  8,11,10,
+
+		// Right
+		12,14,13,  12,15,14,
+
+		// Top
+		16,18,17,  16,19,18,
+
+		// Bottom
+		20,22,21,  20,23,22
+	};
 }
