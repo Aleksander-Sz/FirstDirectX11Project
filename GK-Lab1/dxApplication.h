@@ -33,6 +33,6 @@ private:
 	float yaw;
 	LARGE_INTEGER counterFrequency;
 	float rotationY;
-	DirectX::XMFLOAT4X4 m_modelMtx, m_viewMtx, m_projMtx;
+	DirectX::XMFLOAT4X4 m_model1Mtx, m_model2Mtx, m_viewMtx, m_projMtx;
 	mini::dx_ptr<ID3D11Buffer> m_cbMVP;
 };

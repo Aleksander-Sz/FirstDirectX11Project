@@ -17,7 +17,8 @@ DxApplication::DxApplication(HINSTANCE hInstance) : WindowApplication(hInstance)
 	Viewport viewport{ wndSize };
 	m_device.context()->RSSetViewports(1, &viewport);
 
-	XMStoreFloat4x4(&m_modelMtx, DirectX::XMMatrixIdentity());
+	XMStoreFloat4x4(&m_model1Mtx, DirectX::XMMatrixIdentity());
+	XMStoreFloat4x4(&m_model2Mtx, DirectX::XMMatrixTranslation(-10.0f, 0.0f, 0.0f));
 	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(-30)) *
 		DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
 	XMStoreFloat4x4(&m_projMtx, DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45),
@@ -62,15 +63,10 @@ void DxApplication::Update()
 	LARGE_INTEGER counter;
 	QueryPerformanceCounter(&counter);
 	rotationY = 0.01 * (int)counter.QuadPart / (int)counterFrequency.QuadPart;
-	DirectX::XMStoreFloat4x4(&m_modelMtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
+	DirectX::XMStoreFloat4x4(&m_model1Mtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
 	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(yaw)) *
 		DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(pitch)) *
 		DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
-	D3D11_MAPPED_SUBRESOURCE res;
-	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
-	DirectX::XMMATRIX mvp = XMLoadFloat4x4(&m_modelMtx) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
-	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
-	m_device.context()->Unmap(m_cbMVP.get(), 0);
 }
 bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 {
@@ -138,6 +134,19 @@ void DxApplication::Render()
 	ID3D11Buffer* cbs[] = { m_cbMVP.get() };
 	m_device.context()->VSSetConstantBuffers(0, 1, cbs);
 
+	D3D11_MAPPED_SUBRESOURCE res;
+	DirectX::XMMATRIX mvp;
+
+	mvp = XMLoadFloat4x4(&m_model1Mtx) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
+	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
+	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
+	m_device.context()->Unmap(m_cbMVP.get(), 0);
+	m_device.context()->DrawIndexed(36, 0, 0);
+
+	mvp = XMLoadFloat4x4(&m_model2Mtx) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
+	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
+	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
+	m_device.context()->Unmap(m_cbMVP.get(), 0);
 	m_device.context()->DrawIndexed(36, 0, 0);
 }
 
