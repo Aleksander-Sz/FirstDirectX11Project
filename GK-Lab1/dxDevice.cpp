@@ -29,8 +29,10 @@ DxDevice::DxDevice(const mini::Window& window)
 	m_pixelShader.reset(rawPixelShader);
     const auto vertices = CreateTriangleVertices();
     m_vertexBuffer = CreateVertexBuffer(vertices);
-    const auto indices = CreateCubeIndices();
-    m_indexBuffer = CreateIndexBuffer(indices);
+    const auto indices1 = CreateCubeIndices();
+    m_indexBuffer1 = CreateIndexBuffer(indices1);
+	std::vector<unsigned short> indices2{0,3,10,11,20,21};
+	m_indexBuffer2 = CreateIndexBuffer(indices2);
 	std::vector<D3D11_INPUT_ELEMENT_DESC> elements{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0}

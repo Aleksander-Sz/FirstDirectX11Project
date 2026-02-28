@@ -64,9 +64,9 @@ void DxApplication::Update()
 	QueryPerformanceCounter(&counter);
 	rotationY = 0.01 * (int)counter.QuadPart / (int)counterFrequency.QuadPart;
 	DirectX::XMStoreFloat4x4(&m_model1Mtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
-	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(yaw)) *
-		DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(pitch)) *
-		DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
+	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(yaw) *
+		DirectX::XMMatrixRotationX(pitch) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, zoom));
 }
 bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 {
@@ -84,12 +84,33 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 			msg.result = 0;
 			return true;
 		}
-		if (buttonDown)
+		if (leftButtonDown)
 		{
 			short dx = x - lastX;
 			short dy = y - lastY;
-			yaw -= dx * 0.8f;
-			pitch -= dy * 0.8f;
+			yaw -= dx * 0.03f;
+			if (yaw < -3.14159f)
+				yaw = -3.14159f;
+			if (yaw > 3.14159f)
+				yaw = 3.14159f;
+			pitch -= dy * 0.03f;
+			if (pitch < -3.14159f)
+				pitch = -3.14159f;
+			if (pitch > 3.14159f)
+				pitch = 3.14159f;
+			lastX = x;
+			lastY = y;
+			msg.result = 0;
+			return true;
+		}
+		if (rightButtonDown)
+		{
+			short dy = y - lastY;
+			zoom += dy * 0.05f;
+			if (zoom > 50.0f)
+				zoom = 50.0f;
+			if (zoom < 0.0f)
+				zoom = 0.0f;
 			lastX = x;
 			lastY = y;
 			msg.result = 0;
@@ -98,12 +119,21 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 		return true;
 	}
 	case WM_LBUTTONDOWN:
-		buttonDown = true;
+		leftButtonDown = true;
 		isFirstMovement = true;
 		msg.result = 0;
 		return true;
 	case WM_LBUTTONUP:
-		buttonDown = false;
+		leftButtonDown = false;
+		msg.result = 0;
+		return true;
+	case WM_RBUTTONDOWN:
+		rightButtonDown = true;
+		isFirstMovement = true;
+		msg.result = 0;
+		return true;
+	case WM_RBUTTONUP:
+		rightButtonDown = false;
 		msg.result = 0;
 		return true;
 	case WM_MOUSEWHEEL:
@@ -126,7 +156,7 @@ void DxApplication::Render()
 	UINT strides[] = {sizeof(Vertex)};
 	UINT offsets[] = {0};
 	m_device.context()->IASetVertexBuffers(0, 1, buffers, strides, offsets);
-	m_device.context()->IASetIndexBuffer(m_device.indexBuffer(), DXGI_FORMAT_R16_UINT, 0);
+	m_device.context()->IASetIndexBuffer(m_device.indexBuffer(1), DXGI_FORMAT_R16_UINT, 0);
 	m_device.context()->IASetInputLayout(m_device.layout());
 	m_device.context()->VSSetShader(m_device.vertexShader(), nullptr, 0);
 	m_device.context()->PSSetShader(m_device.pixelShader(), nullptr, 0);
@@ -148,5 +178,13 @@ void DxApplication::Render()
 	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
 	m_device.context()->Unmap(m_cbMVP.get(), 0);
 	m_device.context()->DrawIndexed(36, 0, 0);
+
+	m_device.context()->IASetIndexBuffer(m_device.indexBuffer(2), DXGI_FORMAT_R16_UINT, 0);
+	mvp = DirectX::XMMatrixTranslation(4.0f, 0.0f, 4.0f) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
+	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
+	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
+	m_device.context()->Unmap(m_cbMVP.get(), 0);
+	m_device.context()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	m_device.context()->DrawIndexed(6, 0, 0);
 }
 

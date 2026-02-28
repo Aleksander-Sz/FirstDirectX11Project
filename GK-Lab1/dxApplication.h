@@ -25,12 +25,14 @@ private:
 	mini::dx_ptr<ID3D11PixelShader> m_pixelShader;
 	mini::dx_ptr<ID3D11InputLayout> m_layout;
 
-	bool buttonDown = false;
+	bool leftButtonDown = false;
+	bool rightButtonDown = false;
 	bool isFirstMovement = false;
 	short lastX;
 	short lastY;
-	float pitch;
-	float yaw;
+	float pitch = 0.0f;
+	float yaw = 0.0f;
+	float zoom = 10.0f;
 	LARGE_INTEGER counterFrequency;
 	float rotationY;
 	DirectX::XMFLOAT4X4 m_model1Mtx, m_model2Mtx, m_viewMtx, m_projMtx;

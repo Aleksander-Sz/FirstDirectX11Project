@@ -51,9 +51,17 @@ public:
 	{
 		return m_vertexBuffer.get();
 	}
-	ID3D11Buffer* indexBuffer() const
+	ID3D11Buffer* indexBuffer(unsigned int i) const
 	{
-		return m_indexBuffer.get();
+		switch (i)
+		{
+		case 1:
+			return m_indexBuffer1.get();
+		case 2:
+			return m_indexBuffer2.get();
+		default:
+			return m_indexBuffer1.get();
+		}
 	}
 	ID3D11InputLayout* layout() const
 	{
@@ -73,7 +81,8 @@ private:
 	mini::dx_ptr<ID3D11DeviceContext> m_context;
 	mini::dx_ptr<IDXGISwapChain> m_swapChain;
 	mini::dx_ptr<ID3D11Buffer> m_vertexBuffer;
-	mini::dx_ptr<ID3D11Buffer> m_indexBuffer;
+	mini::dx_ptr<ID3D11Buffer> m_indexBuffer1;
+	mini::dx_ptr<ID3D11Buffer> m_indexBuffer2;
 	mini::dx_ptr<ID3D11InputLayout> m_layout;
 	mini::dx_ptr<ID3D11VertexShader> m_vertexShader;
 	mini::dx_ptr<ID3D11PixelShader> m_pixelShader;
