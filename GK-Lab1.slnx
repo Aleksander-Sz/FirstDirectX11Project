@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="GK-Lab1/GK-Lab1.vcxproj" />
+  <Project Path="GK-Lab1/GK-Lab1.vcxproj" Id="15d428d7-29eb-4e85-87f6-8948408f619c" />
 </Solution>

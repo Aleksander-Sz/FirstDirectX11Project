@@ -13,4 +13,6 @@ private:
 
 	DxDevice m_device;
 	mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
+
+	mini::dx_ptr<ID3D11DepthStencilView> m_depthBuffer;
 };

@@ -36,6 +36,9 @@
     <ClCompile Include="dxApplication.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\..\AppData\Local\Temp\COPILOTBASELINE\e358818e\~DXDEVICE.CPP">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxptr.h">
@@ -59,5 +62,13 @@
     <ClInclude Include="dxApplication.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>Pliki źródłowe</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
+      <Filter>Pliki źródłowe</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
