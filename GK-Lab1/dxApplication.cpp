@@ -24,6 +24,10 @@ DxApplication::DxApplication(HINSTANCE hInstance) : WindowApplication(hInstance)
 		static_cast<float>(wndSize.cx) / wndSize.cy, 0.1f, 100.0f));
 	m_cbMVP = m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>();
 
+	QueryPerformanceFrequency(&counterFrequency);
+	//buttonDown = false;
+	//pitch = 0.0f;
+	//yaw = 0.0f;
 /*	D3D11_RASTERIZER_DESC rasterDesc = {};
 	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.CullMode = D3D11_CULL_NONE; // Wy³¹czamy odrzucanie œcianek
@@ -55,13 +59,67 @@ int DxApplication::MainLoop()
 }
 void DxApplication::Update()
 {
-	DirectX::XMStoreFloat4x4(&m_modelMtx, XMLoadFloat4x4(&m_modelMtx) * DirectX::XMMatrixRotationY(0.001f));
+	LARGE_INTEGER counter;
+	QueryPerformanceCounter(&counter);
+	rotationY = 0.01 * (int)counter.QuadPart / (int)counterFrequency.QuadPart;
+	DirectX::XMStoreFloat4x4(&m_modelMtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
+	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(yaw)) *
+		DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(pitch)) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
 	D3D11_MAPPED_SUBRESOURCE res;
 	m_device.context()->Map(m_cbMVP.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
 	DirectX::XMMATRIX mvp = XMLoadFloat4x4(&m_modelMtx) * XMLoadFloat4x4(&m_viewMtx) * XMLoadFloat4x4(&m_projMtx);
 	memcpy(res.pData, &mvp, sizeof(DirectX::XMMATRIX));
 	m_device.context()->Unmap(m_cbMVP.get(), 0);
-};
+}
+bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
+{
+	switch (msg.message)
+	{
+	case WM_MOUSEMOVE:
+	{
+		signed short x = GET_X_LPARAM(msg.lParam);
+		signed short y = GET_Y_LPARAM(msg.lParam);
+		if (isFirstMovement)
+		{
+			lastX = x;
+			lastY = y;
+			isFirstMovement = false;
+			msg.result = 0;
+			return true;
+		}
+		if (buttonDown)
+		{
+			short dx = x - lastX;
+			short dy = y - lastY;
+			yaw -= dx * 0.8f;
+			pitch -= dy * 0.8f;
+			lastX = x;
+			lastY = y;
+			msg.result = 0;
+			return true;
+		}
+		return true;
+	}
+	case WM_LBUTTONDOWN:
+		buttonDown = true;
+		isFirstMovement = true;
+		msg.result = 0;
+		return true;
+	case WM_LBUTTONUP:
+		buttonDown = false;
+		msg.result = 0;
+		return true;
+	case WM_MOUSEWHEEL:
+	{
+		int delta = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+		msg.result = 0;
+		return true;
+	}
+	}
+	return false;
+}
+
 void DxApplication::Render()
 {
 	const float clearColor[] = { 0.5f,0.5f,1.0f,1.0f };
@@ -82,3 +140,4 @@ void DxApplication::Render()
 
 	m_device.context()->DrawIndexed(36, 0, 0);
 }
+
