@@ -62,11 +62,42 @@ void DxApplication::Update()
 {
 	LARGE_INTEGER counter;
 	QueryPerformanceCounter(&counter);
-	rotationY = 0.01 * (int)counter.QuadPart / (int)counterFrequency.QuadPart;
+	float currentTime = (float)counter.QuadPart / (float)counterFrequency.QuadPart;
+	float deltaTime = lastFrame - currentTime;
+	lastFrame = currentTime;
+	rotationY = 0.01 * currentTime;
 	DirectX::XMStoreFloat4x4(&m_model1Mtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
-	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(yaw) *
-		DirectX::XMMatrixRotationX(pitch) *
-		DirectX::XMMatrixTranslation(0.0f, 0.0f, zoom));
+	DirectX::XMVECTOR cameraUp = DirectX::XMVECTOR{0.0f,1.0f,0.0f,0.0f};
+	cameraFront = DirectX::XMVector4Transform(DirectX::XMVECTOR{0.0f,0.0f,1.0f,0.0f},DirectX::XMMatrixInverse(nullptr, DirectX::XMLoadFloat4x4(&m_viewMtx)));
+	//cameraFront = DirectX::XMVector4Normalize(DirectX::XMVectorAdd(DirectX::XMVECTOR{ 0.0f,0.0f,0.0f,0.0f }, DirectX::XMVectorScale(cameraPosition, -1.0f)));
+	cameraRight = DirectX::XMVector4Normalize(DirectX::XMVector3Cross(cameraFront,cameraUp));
+	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixTranslationFromVector(cameraPosition) *
+		DirectX::XMMatrixRotationY(yaw) *
+		DirectX::XMMatrixRotationX(pitch));
+	if (wPressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, cameraSpeed * deltaTime));
+	}
+	if (sPressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, -cameraSpeed * deltaTime));
+	}
+	if (aPressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, cameraSpeed * deltaTime));
+	}
+	if (dPressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, -cameraSpeed * deltaTime));
+	}
+	if (qPressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, cameraSpeed * deltaTime));
+	}
+	if (ePressed)
+	{
+		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, -cameraSpeed * deltaTime));
+	}
 }
 bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 {
@@ -88,16 +119,16 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 		{
 			short dx = x - lastX;
 			short dy = y - lastY;
-			yaw -= dx * 0.03f;
+			yaw -= dx * 0.01f;
 			if (yaw < -3.14159f)
-				yaw = -3.14159f;
-			if (yaw > 3.14159f)
 				yaw = 3.14159f;
-			pitch -= dy * 0.03f;
-			if (pitch < -3.14159f)
-				pitch = -3.14159f;
-			if (pitch > 3.14159f)
-				pitch = 3.14159f;
+			if (yaw > 3.14159f)
+				yaw = -3.14159f;
+			pitch -= dy * 0.01f;
+			if (pitch < -1.553343f)
+				pitch = -1.553343f;
+			if (pitch > 1.553343f)
+				pitch = 1.553343f;
 			lastX = x;
 			lastY = y;
 			msg.result = 0;
@@ -142,7 +173,57 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 		msg.result = 0;
 		return true;
 	}
-	}
+	case WM_KEYDOWN:
+		switch (msg.wParam)
+		{
+		case 'W':
+			wPressed = true;
+			break;
+		case 'S':
+			sPressed = true;
+			break;
+		case 'A':
+			aPressed = true;
+			break;
+		case 'D':
+			dPressed = true;
+			break;
+		case 'Q':
+			qPressed = true;
+			break;
+		case 'E':
+			ePressed = true;
+			break;
+		case VK_SHIFT:
+			cameraSpeed = FAST_CAMERA_SPEED;
+		}
+		return true;
+	case WM_KEYUP:
+		switch (msg.wParam)
+		{
+		case 'W':
+			wPressed = false;
+			break;
+		case 'S':
+			sPressed = false;
+			break;
+		case 'A':
+			aPressed = false;
+			break;
+		case 'D':
+			dPressed = false;
+			break;
+		case 'Q':
+			qPressed = false;
+			break;
+		case 'E':
+			ePressed = false;
+			break;
+		case VK_SHIFT:
+			cameraSpeed = SLOW_CAMERA_SPEED;
+		}
+		return true;
+}
 	return false;
 }
 
