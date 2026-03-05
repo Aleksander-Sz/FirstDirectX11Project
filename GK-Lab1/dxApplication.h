@@ -43,6 +43,8 @@ private:
 	bool dPressed = false;
 	bool qPressed = false;
 	bool ePressed = false;
+	enum CameraMode { FREE, ORBITING };
+	CameraMode m_cameraMode = FREE;
 	DirectX::XMVECTOR cameraPosition = DirectX::XMVECTOR{ 0.0f, 0.0f, 10.0f, 0.0f };
 	DirectX::XMVECTOR cameraFront = DirectX::XMVECTOR{ 0.0f, 0.0f, -1.0f, 0.0f };
 	DirectX::XMVECTOR cameraRight = DirectX::XMVECTOR{ -1.0f, 0.0f, 0.0f, 0.0f };

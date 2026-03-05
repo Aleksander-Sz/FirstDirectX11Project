@@ -67,37 +67,54 @@ void DxApplication::Update()
 	lastFrame = currentTime;
 	rotationY = 0.01 * currentTime;
 	DirectX::XMStoreFloat4x4(&m_model1Mtx, DirectX::XMMatrixRotationY(DirectX::XMConvertToDegrees(rotationY)));
-	DirectX::XMVECTOR cameraUp = DirectX::XMVECTOR{0.0f,1.0f,0.0f,0.0f};
-	cameraFront = DirectX::XMVector4Transform(DirectX::XMVECTOR{0.0f,0.0f,1.0f,0.0f},DirectX::XMMatrixInverse(nullptr, DirectX::XMLoadFloat4x4(&m_viewMtx)));
-	//cameraFront = DirectX::XMVector4Normalize(DirectX::XMVectorAdd(DirectX::XMVECTOR{ 0.0f,0.0f,0.0f,0.0f }, DirectX::XMVectorScale(cameraPosition, -1.0f)));
-	cameraRight = DirectX::XMVector4Normalize(DirectX::XMVector3Cross(cameraFront,cameraUp));
-	XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixTranslationFromVector(cameraPosition) *
-		DirectX::XMMatrixRotationY(yaw) *
-		DirectX::XMMatrixRotationX(pitch));
-	if (wPressed)
+	// Camera logic
+	if (m_cameraMode == FREE)
 	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, cameraSpeed * deltaTime));
+		DirectX::XMVECTOR cameraUp = DirectX::XMVECTOR{0.0f,1.0f,0.0f,0.0f};
+		cameraFront = DirectX::XMVector4Transform(DirectX::XMVECTOR{0.0f,0.0f,1.0f,0.0f},DirectX::XMMatrixInverse(nullptr, DirectX::XMLoadFloat4x4(&m_viewMtx)));
+		//cameraFront = DirectX::XMVector4Normalize(DirectX::XMVectorAdd(DirectX::XMVECTOR{ 0.0f,0.0f,0.0f,0.0f }, DirectX::XMVectorScale(cameraPosition, -1.0f)));
+		cameraRight = DirectX::XMVector4Normalize(DirectX::XMVector3Cross(cameraFront,cameraUp));
+		XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixTranslationFromVector(cameraPosition) *
+			DirectX::XMMatrixRotationY(yaw) *
+			DirectX::XMMatrixRotationX(pitch));
+		if (wPressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, cameraSpeed * deltaTime));
+		}
+		if (sPressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, -cameraSpeed * deltaTime));
+		}
+		if (aPressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, cameraSpeed * deltaTime));
+		}
+		if (dPressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, -cameraSpeed * deltaTime));
+		}
+		if (qPressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, cameraSpeed * deltaTime));
+		}
+		if (ePressed)
+		{
+			cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, -cameraSpeed * deltaTime));
+		}
 	}
-	if (sPressed)
+	else
 	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraFront, -cameraSpeed * deltaTime));
+		// Orbiting camera
+		XMStoreFloat4x4(&m_viewMtx, DirectX::XMMatrixRotationY(yaw) *
+			DirectX::XMMatrixRotationX(pitch) *
+			DirectX::XMMatrixTranslation(0.0f, 0.0f, zoom));
+		float x = -zoom * sinf(yaw) * cosf(pitch);
+		float y = zoom * sinf(pitch);
+		float z = zoom * cosf(yaw) * cosf(pitch);
+		cameraPosition = DirectX::XMVectorSet(x, y, z, 0.0f);
 	}
-	if (aPressed)
-	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, cameraSpeed * deltaTime));
-	}
-	if (dPressed)
-	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraRight, -cameraSpeed * deltaTime));
-	}
-	if (qPressed)
-	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, cameraSpeed * deltaTime));
-	}
-	if (ePressed)
-	{
-		cameraPosition = DirectX::XMVectorAdd(cameraPosition, DirectX::XMVectorScale(cameraUp, -cameraSpeed * deltaTime));
-	}
+
+	
 }
 bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 {
@@ -196,6 +213,13 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 			break;
 		case VK_SHIFT:
 			cameraSpeed = FAST_CAMERA_SPEED;
+			break;
+		case '1':
+			m_cameraMode = FREE;
+			break;
+		case '2':
+			m_cameraMode = ORBITING;
+			break;
 		}
 		return true;
 	case WM_KEYUP:
@@ -221,6 +245,7 @@ bool DxApplication::ProcessMessage(mini::WindowMessage& msg)
 			break;
 		case VK_SHIFT:
 			cameraSpeed = SLOW_CAMERA_SPEED;
+			break;
 		}
 		return true;
 }
